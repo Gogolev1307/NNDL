@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Titanic Survival Classifier - TensorFlow.js</title>
+    <!-- Using CDNs as specified in the prompt -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis@latest"></script>
+    <script src="app.js" defer></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background-color: #f5f7fa;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #1a73e8;
+            margin-top: 0;
+        }
+        h1 {
+            border-bottom: 2px solid #1a73e8;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fff;
+            transition: box-shadow 0.3s;
+        }
+        section:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        button {
+            background-color: #1a73e8;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 8px 5px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+        button:hover {
+            background-color: #0d62c9;
+            transform: translateY(-2px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .metrics-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .metric-card {
+            border: 1px solid #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            min-width: 250px;
+            flex: 1;
+            background-color: #f9f9f9;
+        }
+        .slider-container {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f0f7ff;
+            border-radius: 6px;
+        }
+        .slider {
+            width: 100%;
+            max-width: 400px;
+            margin: 10px 0;
+        }
+        .data-preview {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .note {
+            background-color: #e8f4fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #1a73e8;
+        }
+        .status-box {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            background-color: #f0f7ff;
+            border-left: 4px solid #1a73e8;
+        }
+        .feature-toggle {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            section {
+                padding: 15px;
+            }
+            .metrics-container {
+                flex-direction: column;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            h2 {
+                font-size: 20px;
+            }
+        }
+        
+        /* TensorFlow.js visor customization */
+        .tfjs-visor {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        /* Step indicator */
+        .step {
+            display: inline-block;
+            background-color: #1a73e8;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚢 Titanic Survival Classifier with TensorFlow.js</h1>
+        <p class="note">This app implements a binary classifier for the Kaggle Titanic dataset using TensorFlow.js in the browser. No server required!</p>
+        
+        <!-- Step 1: Data Load -->
+        <section id="data-load">
+            <h2><span class="step">1</span> Data Load</h2>
+            <p>Upload the training and test CSV files from the Titanic dataset (download from <a href="https://www.kaggle.com/c/titanic/data" target="_blank">Kaggle</a>):</p>
+            <div>
+                <label for="train-file"><strong>Training Data (train.csv):</strong></label>
+                <input type="file" id="train-file" accept=".csv">
+            </div>
+            <div>
+                <label for="test-file"><strong>Test Data (test.csv):</strong></label>
+                <input type="file" id="test-file" accept=".csv">
+            </div>
+            <button id="load-data-btn" onclick="loadData()">📁 Load Data</button>
+            <div id="data-status" class="status-box"></div>
+        </section>
+
+        <!-- Step 2: Data Inspection -->
+        <section id="inspect">
+            <h2><span class="step">2</span> Data Inspection</h2>
+            <button id="inspect-btn" onclick="inspectData()" disabled>🔍 Inspect Data</button>
+            <div id="data-preview" class="data-preview"></div>
+            <div id="data-stats"></div>
+            <div id="charts"></div>
+        </section>
+
+        <!-- Step 3: Preprocessing -->
+        <section id="preprocessing">
+            <h2><span class="step">3</span> Preprocessing</h2>
+            <button id="preprocess-btn" onclick="preprocessData()" disabled>⚙️ Preprocess Data</button>
+            
+            <div class="feature-toggle">
+                <label>
+                    <input type="checkbox" id="add-family-features" checked>
+                    <strong>Add Family Features:</strong> FamilySize = SibSp + Parch + 1, IsAlone = (FamilySize == 1)
+                </label>
+            </div>
+            
+            <div id="preprocessing-output" class="status-box"></div>
+        </section>
+
+        <!-- Step 4: Model Setup -->
+        <section id="model">
+            <h2><span class="step">4</span> Model Setup</h2>
+            <button id="create-model-btn" onclick="createModel()" disabled>🧠 Create Model</button>
+            <div id="model-summary"></div>
+        </section>
+
+        <!-- Step 5: Training -->
+        <section id="training">
+            <h2><span class="step">5</span> Training</h2>
+            <button id="train-btn" onclick="trainModel()" disabled>🏋️ Train Model</button>
+            <div id="training-status" class="status-box"></div>
+            <div id="training-vis"></div>
+            <p><em>Training uses: 80/20 stratified split, 50 epochs, batch size 32, early stopping (patience=5)</em></p>
+        </section>
+
+        <!-- Step 6: Evaluation Metrics -->
+        <section id="metrics">
+            <h2><span class="step">6</span> Evaluation Metrics</h2>
+            <div class="slider-container">
+                <label for="threshold-slider"><strong>Classification Threshold (adjust for ROC curve):</strong></label>
+                <input type="range" id="threshold-slider" class="slider" min="0" max="1" step="0.01" value="0.5" disabled>
+                <span id="threshold-value">0.5</span>
+            </div>
+            <div id="metrics-output" class="metrics-container">
+                <div class="metric-card">
+                    <h3>📊 Confusion Matrix</h3>
+                    <div id="confusion-matrix"></div>
+                </div>
+                <div class="metric-card">
+                    <h3>📈 Performance Metrics</h3>
+                    <div id="performance-metrics"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 7: Prediction -->
+        <section id="prediction">
+            <h2><span class="step">7</span> Prediction</h2>
+            <button id="predict-btn" onclick="predict()" disabled>🔮 Predict on Test Data</button>
+            <div id="prediction-output" class="status-box"></div>
+        </section>
+
+        <!-- Step 8: Export Results -->
+        <section id="export">
+            <h2><span class="step">8</span> Export Results</h2>
+            <button id="export-btn" onclick="exportResults()" disabled>💾 Export Results</button>
+            <div id="export-status" class="status-box"></div>
+        </section>
+
+        <!-- Deployment Notes -->
+        <section id="deployment">
+            <h2>🚀 Deployment Notes</h2>
+            <div class="note">
+                <p><strong>To deploy this application on GitHub Pages:</strong></p>
+                <ol>
+                    <li>Create a public GitHub repository</li>
+                    <li>Commit <code>index.html</code> and <code>app.js</code> to the repository</li>
+                    <li>Enable GitHub Pages in repository settings (Settings → Pages → Source: main branch, root folder)</li>
+                    <li>Your app will be available at: <code>https://[your-username].github.io/[repository-name]</code></li>
+                    <li>Test the URL and share with others!</li>
+                </ol>
+                <p><strong>Note:</strong> The model runs entirely in the browser using TensorFlow.js - no server required!</p>
+            </div>
+        </section>
+        
+        <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666;">
+            <p>Titanic Survival Classifier using TensorFlow.js | Ready for GitHub Pages</p>
+            <p>Using TensorFlow.js CDN and tfjs-vis for visualizations</p>
+        </footer>
+    </div>
+</body>
+</html>
